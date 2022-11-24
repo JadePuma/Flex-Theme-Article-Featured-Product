@@ -2,44 +2,20 @@
 
 Custom section added by JadePuma
 Instructions - https://jadepuma.com/blogs/shopify-tutorials/promote-a-product-in-an-article-in-the-flex-theme
-Last editted - 14Sep22
+Last editted - 26Oct22
 
 {% endcomment %}
 
-{% for tag in article.tags %}
-	{% if tag contains 'product-' %}
-		{% assign product-handle-check = tag | remove_first: "product-" %}
-    {%- assign product-check = all_products[product-handle-check] -%}
-      {% if product-check.title.size > 0  %}  
-        {% assign product-handle = tag | remove_first: "product-" %}    
-        {% assign feature_product_array = feature_product_array | append: product-handle | append: ',' %}
-	    {% endif %} 
-  
-  {% endif %}
+{% assign feature_product_array = article.metafields.jadepuma.featured_products.value %}
+{% assign num_products = 0  %}
+
+{% for product in feature_product_array  %}   
+
+   {% assign num_products = num_products | plus: 1 %}
+
 {% endfor %}
 
-{% assign feature_product_array = feature_product_array | split: "," %} 
-{% assign num_featured_products = feature_product_array.size %}
-
-{% if product-handle %}
-
-  {%- assign product = all_products[product-handle] -%}
-  {%- assign product_tags = product.tags | join: ' ' -%}
-  {%- assign collection_handles = product.collections | map: 'handle' -%}
-
-  {% liquid
-    assign selected_variant = product.selected_variant
-
-    if product.variants.size == 1 or settings.select_first_available_variant
-      assign selected_variant = product.selected_or_first_available_variant
-    endif
-  %}
-
-  {% if product.empty? %}
-    {%- assign section_onboarding = true -%}
-  {% else %}
-    {%- assign section_onboarding = false -%}
-  {% endif %}
+{% if num_products > 0 %}
 
   {% style %}
     #shopify-section-{{ section.id }} {
@@ -74,11 +50,9 @@ Last editted - 14Sep22
               data-scroll-class="{{ section.settings.animation }}"
             {% endif %}>
 
-
-{% if num_featured_products == 1 %}
-
+{% if num_products == 1 %}
+ {% for product in feature_product_array  %}    
       <h2 class="section-heading-{{ section.id }}">{{ section.settings.heading }}</h2>
-
       <div class="product-{{ product.id }}">
         {%
           render 'related-product',
@@ -108,12 +82,11 @@ Last editted - 14Sep22
       <button class="button action_button action_button--primary"><a href="/products/{{ product-handle }}">Learn More</a></button>
       </div>
 
+ {% endfor  %}    
+
 {% else %}
 
-
 {% assign block_width = 100 | divided_by: section.settings.products_per_row %}
-
-
 
 {% style %}
 
@@ -181,8 +154,7 @@ Last editted - 14Sep22
 <h2 class="section-heading-{{ section.id }}">{{ section.settings.multiple_products_heading }}</h2>
 
 <div class="featured_product_grid_layout container">
-{% for featured_product in feature_product_array %}
-  {%- assign product = all_products[featured_product] -%}
+  {% for product in feature_product_array  %}     
   <div class="featured_product_grid_item">
     <img class="featured_product_grid_image" src=" {{product.featured_image | img_url: 'large' }}"/>
     <div>
@@ -246,16 +218,16 @@ Last editted - 14Sep22
 
   {% endif %}
 
-
 {% schema %}
 {
   "name": "Article featured products",
   "class": "featured-product-section jsProduct",
+  "templates": [ "article" ],
   "settings": [
     {
       "type": "header",
       "content": "Instructions",
-      "info": "To promote a product on article, create an article tag.  Tag should start with 'product-' followed by the desired product handle.  Each product tag added will get displayed."
+      "info": "To promote a product on article, use the article metafields to select the desired product(s)."
     },
     {
       "type": "header",
